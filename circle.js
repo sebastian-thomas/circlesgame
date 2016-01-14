@@ -24,41 +24,46 @@ var circleGame = function(){
 
 
 	    function create(){
+
+	    	//start with 2 circles
+	    	numOFCircles = 2;
+
 	    	game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 	    	game.physics.startSystem(Phaser.Physics.P2JS);
 	    	game.stage.backgroundColor = '#000000';
 	    	initGame();
 
-	    	for(var i=0; i<numOFCircles; ++i){
-	    		game.physics.p2.enable([circles[i].sprite]);
-	    		circles[i].sprite.body.collideWorldBounds = true;
-	    		circles[i].sprite.body.setCircle(circles[i].radius);
-	    	}
-	    	circles[0].sprite.body.static = true;
 	    	//game.physics.arcade.gravity.y = 200;
 	    };
 
 	    function initGame(){
-	    	numOFCircles = 4;
-
+	    	
 	    	var radius = Math.floor(getMaxObjWidth()/2);
-
-	    	var c1 = new Circle(100,150,radius,0, SHAPES.Circle);
-	    	var c2 = new Circle(100,450,radius,1, SHAPES.Circle);
-	    	var c3 = new Circle(300,150,radius,2, SHAPES.Circle);
-	    	var c4 = new Circle(400,450,radius,3, SHAPES.Circle);
-
-	    	circles.push(c1);
-	    	circles.push(c2);
-	    	circles.push(c3);
-	    	circles.push(c4);
+	    	var c = -1;
+	    	circles.length = 0;
+	    	circles.push(new Circle(newWidth/2, newHeight/2,radius,( ++c % colors.length), SHAPES.Circle));
+	    	for(var i=1; i < numOFCircles; ++i){
+	    		circles.push(new Circle(
+	    			Math.floor(Math.random() * newWidth), 
+	    			Math.floor(Math.random() * newHeight),
+	    			radius,
+	    			( ++c % colors.length), 
+	    			SHAPES.Circle));
+	    	}
 
 	    	for(var i=0; i < circles.length; ++i){
 	    		circles[i].makeSprite();
+	    		game.physics.p2.enable([circles[i].sprite]);
+	    		circles[i].sprite.body.collideWorldBounds = true;
+	    		circles[i].sprite.body.setCircle(circles[i].radius);
 	    	}
+
+	    	circles[0].sprite.body.static = true;
 	    };
 
 	    function update(){
+	    	var colorToCheck = circles[0].colorIndex;
+	    	var allSame = true;
 	    	for(var i=1; i < numOFCircles; ++i){
 	    		if(distanceBetween(circles[0].sprite,circles[i].sprite) < 100 ){
 	    			speed = 300;
@@ -67,6 +72,17 @@ var circleGame = function(){
 	    			speed = 200;
 	    		}
 	    		accelerateToObject(circles[i].sprite, circles[0].sprite,speed);
+
+	    		if(circles[i].colorIndex != colorToCheck){
+	    			allSame = false;
+	    		}
+	    	}
+
+	    	if(allSame){
+	    		clearCircles();
+	    		numOFCircles++;
+	    		allSame = false;
+	    		initGame();
 	    	}
 	    }
 
@@ -101,6 +117,10 @@ var circleGame = function(){
 				this.updateSprite();
 				//console.log("--" + this.colorIndex);
 			};
+
+			this.remove = function(){
+				this.sprite.destroy();
+			}
 		};
 
 		function distanceBetween(spriteA,spriteB){
@@ -125,6 +145,13 @@ var circleGame = function(){
 			var maxWidth = Math.floor(Math.sqrt(areaObj))
 			console.log("Maxobj width : "+ maxWidth);
 			return maxWidth;
+		}
+
+		function clearCircles(){
+			for(var i = 0; i < circles.length; ++i){
+				circles[i].remove();
+			}
+			circles.length = 0;
 		}
 
 }

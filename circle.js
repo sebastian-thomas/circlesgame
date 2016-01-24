@@ -14,6 +14,8 @@ var circleGame = function(){
 	    //Game Constants
 	    var MAX_OBJS = 50;
 	    var SHAPES = {Circle:0, Square:1, Triangle:2};
+	    var T_CHANGE = 5;
+	    var T_UPMS = 200;
 
 	    var game = new Phaser.Game(newWidth, newHeight, Phaser.AUTO, 'phaser-example', { create: create, update : update });
 
@@ -26,13 +28,14 @@ var circleGame = function(){
 	    function create(){
 
 	    	//start with 2 circles
-	    	numOFCircles = 2;
+	    	numOFCircles = 30;
 
 	    	game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 	    	game.physics.startSystem(Phaser.Physics.P2JS);
 	    	game.stage.backgroundColor = '#000000';
 	    	initGame();
 
+	    	game.time.events.loop(T_UPMS, updateSprites , this);
 	    	//game.physics.arcade.gravity.y = 200;
 	    };
 
@@ -65,6 +68,7 @@ var circleGame = function(){
 	    	var colorToCheck = circles[0].colorIndex;
 	    	var allSame = true;
 	    	for(var i=1; i < numOFCircles; ++i){
+
 	    		if(distanceBetween(circles[0].sprite,circles[i].sprite) < 100 ){
 	    			speed = 300;
 	    		}
@@ -94,15 +98,47 @@ var circleGame = function(){
 			this.shape = shape;
 			this.sprite;
 
+			this.touchedOnce = false;
+			this.upCount;
+
 			this.makeSprite = function(){
 				var bmd = game.add.bitmapData(radius*2,radius*2);
 				bmd.circle(radius, radius, radius, colors[this.colorIndex]);
+
 				this.sprite = game.add.sprite(x, y, bmd);
 				this.sprite.alpha = 0;
 				game.add.tween(this.sprite).to( { alpha: 1 }, 2000, "Linear", true);
 
 				this.sprite.inputEnabled = true;
 				this.sprite.events.onInputDown.add(this.clicked, this);
+			};
+
+			this.update = function(){
+				if(this.touchedOnce){
+					this.upCount++;
+					//console.log(this.upCount);
+					if(this.upCount > T_CHANGE*1000/T_UPMS){
+						this.clicked();
+					}
+					else{
+						var sectorAngle = ((this.upCount*T_UPMS)/T_CHANGE)*0.360;
+						//console.log(sectorAngle);
+						var bmd = game.add.bitmapData(radius*2,radius*2);
+						bmd.circle(radius, radius, radius, colors[this.colorIndex]);
+
+						bmd.context.beginPath();
+						bmd.context.strokeStyle = '#000000';
+						bmd.context.fillStyle = colors[(this.colorIndex+1)%colors.length];
+						bmd.context.moveTo(radius,radius);
+						bmd.context.arc(radius,radius,radius,0,toRadians(sectorAngle));
+						bmd.context.lineTo(radius,radius);
+						bmd.context.fill();
+
+						bmd.circle(radius, radius, radius - radius/10, colors[this.colorIndex]);
+
+						this.sprite.loadTexture(bmd);
+					}
+				}
 			};
 
 			this.updateSprite = function(){
@@ -113,8 +149,11 @@ var circleGame = function(){
 
 			this.clicked = function(){
 				//console.log("++" + this.colorIndex)
+				this.touchedOnce = true;
+				this.upCount = 0;
 				this.colorIndex = (this.colorIndex + 1) % colors.length;
-				this.updateSprite();
+				this.update();
+				//this.updateSprite();
 				//console.log("--" + this.colorIndex);
 			};
 
@@ -122,6 +161,13 @@ var circleGame = function(){
 				this.sprite.destroy();
 			}
 		};
+
+		function updateSprites(){
+			//console.log("update");
+			for(var i=0; i < numOFCircles; ++i){
+				circles[i].update();
+			}
+		}
 
 		function distanceBetween(spriteA,spriteB){
 		    var dx = spriteA.body.x - spriteB.body.x;  //distance ship X to planet X
@@ -152,6 +198,10 @@ var circleGame = function(){
 				circles[i].remove();
 			}
 			circles.length = 0;
+		}
+
+		function toRadians(deg) {
+		    return deg * Math.PI / 180;
 		}
 
 }

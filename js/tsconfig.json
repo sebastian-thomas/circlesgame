@@ -1,0 +1,6 @@
+{
+    "files": [
+        "phaser.d.ts",
+        "game.ts"
+    ]
+}

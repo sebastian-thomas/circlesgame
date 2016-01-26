@@ -1,2 +1,6 @@
 index.html
-phaser.min.js
+js/phaser.min.js
+js/*.d.ts
+js/phaser.js
+.DS_Store
+build/*

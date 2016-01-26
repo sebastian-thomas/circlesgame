@@ -1,3 +1,6 @@
+//will be moving the code to typescript.
+//this will shaow the basic game
+
 var circleGame = function(){
 
         var targetWidth = 480; // the width of the game we want
